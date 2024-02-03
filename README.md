@@ -1,9 +1,4 @@
-# **Monkey Albinos Anti-Malware Software**
-
-> "Małpa albinos, teraz poznaje..."
-> 
-> ~ some malware
-
+# **Basic Anti-Malware Software**
 
 
 ## **Features**
@@ -55,7 +50,7 @@ Type indicates if the provided signature is the signature of file or e.g. .text 
 Whenever AV detected that scanned file is malicious, it takes the following steps:
 1. All metadata of file are logged.
 1. All permissions for that file are dropped to `000`. 
-2. File is moved to `/var/lib/maams/quarantine/`
+2. File is moved to `/var/lib/av/quarantine/`
 3. File is encrypted.
 4. Owner of a file is changed to dummy user with no privileges.
 5. AV logs the event includig details about file, detection time, reason of quarantine.
