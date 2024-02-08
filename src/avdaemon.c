@@ -1,9 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sqlite3.h>
+
 #include "avdaemon.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* get_substring(const char* string){
+    char* substring = (char*)malloc(7); // Allocate memory for substring (including null terminator)
+    strncpy(substring, string, 6);
+    substring[6] = '\0'; // Add null terminator
+    return substring;
+}
+
+int main(int argc, char const *argv[])
+{
+    //sqlite3 *db;
+    //connect_db(&db);
+    isolate("test","d41d8cd98f00b204e9800998ecf8427e");
+    return 0;
+}
 
 int connect_db(sqlite3 **db)
 {
@@ -17,14 +35,6 @@ int connect_db(sqlite3 **db)
     }
 }
 
-
-int main(int argc, char const *argv[])
-{
-    sqlite3 *db;
-    connect_db(&db);
-    
-    return 0;
-}
 
 char* compute_md5(const char *filename)
 {
@@ -70,8 +80,69 @@ int find_signature_in_db(const char* hashstring, sqlite3 **db){
     }
     int step = sqlite3_step(res);
     sqlite3_finalize(res);
+    free(sql);
     if (step == SQLITE_ROW){
         return 0;
     }
     return 1;
+}
+
+void encrypt_file(const char* filename, sqlite3 **db){
+    return 0;
+}
+
+void drop_privileges(const char* filename){
+    int drop_priv = chmod(filename, 0000);
+    if (drop_priv != 0){
+         fprintf(stderr, "Cannot drop privileges");
+     } 
+}
+
+void relocate(const char* filename, const char* hash){
+    const char* new_filename = get_substring(hash);
+    if (new_filename == NULL){
+        fprintf(stderr, "Failed to create new filename");
+        return;
+    }
+    const char* extension = ".0";
+    const char* quarantine_dir = "/var/lib/av/quarantine/";
+    size_t new_filepath_size = strlen(quarantine_dir) + strlen(new_filename) + strlen(extension) + 1;
+    char* new_filepath = (char*)malloc(new_filepath_size);
+    if (new_filepath == NULL){
+        fprintf(stderr, "Memory Allocation failed for new_filepath");
+        free(new_filepath);
+        return;
+    }
+    snprintf(new_filepath, new_filepath_size, "%s%s%s",quarantine_dir,new_filename,extension);
+    if (rename(filename, new_filepath)!=0){
+        fprintf(stderr, "File Relocation error");
+    }
+    free(new_filename);
+    free(new_filepath);
+}
+
+void isolate(const char* filename, const char* hash){
+    
+     drop_privileges(filename);
+     relocate(filename,hash);
+
+    // const char* new_filename = get_substring(hash);
+    
+    // const char* extension = ".0";
+    // const char* full_filename = strcat(new_filename, extension);
+    // const char* quarantine_dir = "/var/lib/av/quarantine/";
+    // char* new_filepath = malloc(strlen(quarantine_dir) + strlen(full_filename) + 1);
+    // strcpy(new_filepath, quarantine_dir);
+    // strcat(new_filepath, full_filename);
+    // int relocate = rename(filename, new_filepath);
+    // free(new_filename);
+    
+}
+
+int scan(const char* filename, sqlite3 **db){
+    char* hashstring = compute_md5(filename);
+    int found = find_signature_in_db(hashstring, &db);
+    if (found == 0){
+        isolate(filename, hashstring);
+    }
 }
