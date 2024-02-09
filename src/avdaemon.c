@@ -9,14 +9,25 @@
 #include <string.h>
 
 char* get_substring(const char* string){
-    char* substring = (char*)malloc(7); // Allocate memory for substring (including null terminator)
+    char* substring = (char*)malloc(7); 
     strncpy(substring, string, 6);
-    substring[6] = '\0'; // Add null terminator
+    substring[6] = '\0';
     return substring;
 }
 
 int main(int argc, char const *argv[])
-{
+{   
+    const unsigned char* key = (unsigned char*)malloc(AES_KEY_SIZE * sizeof(unsigned char));
+    if (key == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return -1;
+    }
+    if (get_key("/home/av/security/enc.key", key) != 0) {
+        fprintf(stderr,"Failed to save a key.");
+        return -1;
+    }
+    isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", "BE4697716BE4F626FCDBEA03A8D1F93C");
+    
     return 0;
 }
 
@@ -84,8 +95,9 @@ int find_signature_in_db(const char* hashstring, sqlite3 **db){
     return 1;
 }
 
-void encrypt_file(const char* input_filename, const char* output_filename, const unsigned char* ukey){
+void encrypt_file(const char* input_filename ,const unsigned char* ukey){
     FILE *ifp, *ofp;
+    const char* output_filename = rename_enc(input_filename);
     ifp = fopen(input_filename, "rb");
     ofp = fopen(output_filename, "wb");
     unsigned char init_vec[AES_BLOCK_SIZE];
@@ -95,10 +107,10 @@ void encrypt_file(const char* input_filename, const char* output_filename, const
 
     RAND_bytes(init_vec, AES_BLOCK_SIZE);
     fwrite(init_vec,1,AES_BLOCK_SIZE,ofp);
-    AES_KEY key;
-    AES_set_encrypt_key(ukey, 256, &key);
+    AES_KEY aes_key;
+    AES_set_encrypt_key(ukey, 256, &aes_key);
     while ((num_read = fread(read_buff, 1, sizeof(read_buff),ifp)) > 0){
-        AES_cbc_encrypt(read_buff, cipher_buf, num_read, &key, init_vec, AES_ENCRYPT);
+        AES_cbc_encrypt(read_buff, cipher_buf, num_read, &aes_key, init_vec, AES_ENCRYPT);
         fwrite(cipher_buf,1,num_read, ofp);
     }
     fclose(ifp);
@@ -110,7 +122,7 @@ void drop_privileges(const char* filename){
     int drop_priv = chmod(filename, 0000);
     if (drop_priv != 0){
          fprintf(stderr, "Cannot drop privileges");
-     } 
+    }
 }
 
 void relocate(const char* filename, const char* hash){
@@ -136,17 +148,48 @@ void relocate(const char* filename, const char* hash){
     free(new_filepath);
 }
 
-void isolate(const char* filename, const char* hash){
-    
-     drop_privileges(filename);
-     relocate(filename,hash);
+void isolate(const char* filename, const char* hash, const unsigned char* key){
+    encrypt_file(filename, key);
+    const char* output_filename = rename_enc(filename);
+    drop_privileges(output_filename);
+    relocate(output_filename,hash);
     
 }
 
-int scan(const char* filename, sqlite3 **db){
-    char* hashstring = compute_md5(filename);
+int scan(const char* filename, sqlite3 **db, const unsigned char* key){
+    const char* hashstring = compute_md5(filename);
     int found = find_signature_in_db(hashstring, &db);
+    
     if (found == 0){
-        isolate(filename, hashstring);
+        isolate(filename, hashstring, key);
     }
+}
+
+int get_key(const char* filename, const unsigned char* key){
+    FILE *fp = fopen(filename, "rb");
+    if (fp == NULL){
+        fprintf(stderr, "Failed to load key file");
+        return -1;
+    }
+    if (fread(key, 1, AES_KEY_SIZE, fp) < AES_KEY_SIZE){
+        fprintf(stderr, "Failed to load AES key file.");
+        fclose(fp);
+        return -1;
+    }
+    fclose(fp);
+    return 0;
+}
+
+char* rename_enc(const char* filename){
+    const char* extension = ".enc";
+    size_t new_filename_size = strlen(filename) + strlen(extension) + 1;
+    
+    const char* output_filename = (char*)malloc(new_filename_size);
+    if (output_filename == NULL){
+            fprintf(stderr, "Memory Allocation failed for new_filepath");
+            free(output_filename);
+            return;
+    }
+    snprintf(output_filename, new_filename_size, "%s%s",filename,extension);
+    return output_filename;
 }

@@ -6,12 +6,16 @@
 #include <sqlite3.h>
 #include <sys/stat.h>
 #include <string.h>
+#define AES_KEY_SIZE 32
+
 
 char* compute_md5(const char* filename);
 int find_signature_in_db(const char* hashstring, sqlite3 **db);
 int connect_db(sqlite3 **db);
-int scan(const char* filename, sqlite3 **db);
-void isolate(const char* filename, const char* hash);
-void encrypt_file(const char* input_filename, const char* output_filename, const unsigned char* ukey);
+int scan(const char* filename, sqlite3 **db, const unsigned char* key);
+void isolate(const char* filename, const char* hash,  const unsigned char* key);
+void encrypt_file(const char* input_filename, const unsigned char* ukey);
 void relocate(const char* filename, const char* hash);
 void drop_privileges(const char* filename);
+int get_key(const char* filename,  const unsigned char* key);
+char* rename_enc(const char* filename);

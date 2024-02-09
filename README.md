@@ -48,12 +48,11 @@ Type indicates if the provided signature is the signature of file or e.g. .text 
 ## **Quarantine mechanism**
 
 Whenever AV detected that scanned file is malicious, it takes the following steps:
-1. All metadata of file are logged.
-1. All permissions for that file are dropped to `000`. 
-2. File is moved to `/var/lib/av/quarantine/`
-3. File is encrypted.
+1. AV logs the event includig details about file, detection time, reason of quarantine..
+2. File is encrypted.
+3. All permissions for that file are dropped to `000`. 
 4. Owner of a file is changed to dummy user with no privileges.
-5. AV logs the event includig details about file, detection time, reason of quarantine.
+5. File is moved to `/var/lib/av/quarantine/`
 6. User is notified with possibly danagerous malware.
 
 
