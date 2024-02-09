@@ -17,9 +17,6 @@ char* get_substring(const char* string){
 
 int main(int argc, char const *argv[])
 {
-    //sqlite3 *db;
-    //connect_db(&db);
-    isolate("test","d41d8cd98f00b204e9800998ecf8427e");
     return 0;
 }
 
@@ -87,8 +84,26 @@ int find_signature_in_db(const char* hashstring, sqlite3 **db){
     return 1;
 }
 
-void encrypt_file(const char* filename, sqlite3 **db){
-    return 0;
+void encrypt_file(const char* input_filename, const char* output_filename, const unsigned char* ukey){
+    FILE *ifp, *ofp;
+    ifp = fopen(input_filename, "rb");
+    ofp = fopen(output_filename, "wb");
+    unsigned char init_vec[AES_BLOCK_SIZE];
+    unsigned char read_buff[1024];
+    unsigned char cipher_buf[sizeof(read_buff) + AES_BLOCK_SIZE];
+    int num_read;
+
+    RAND_bytes(init_vec, AES_BLOCK_SIZE);
+    fwrite(init_vec,1,AES_BLOCK_SIZE,ofp);
+    AES_KEY key;
+    AES_set_encrypt_key(ukey, 256, &key);
+    while ((num_read = fread(read_buff, 1, sizeof(read_buff),ifp)) > 0){
+        AES_cbc_encrypt(read_buff, cipher_buf, num_read, &key, init_vec, AES_ENCRYPT);
+        fwrite(cipher_buf,1,num_read, ofp);
+    }
+    fclose(ifp);
+    fclose(ofp);
+
 }
 
 void drop_privileges(const char* filename){
@@ -125,17 +140,6 @@ void isolate(const char* filename, const char* hash){
     
      drop_privileges(filename);
      relocate(filename,hash);
-
-    // const char* new_filename = get_substring(hash);
-    
-    // const char* extension = ".0";
-    // const char* full_filename = strcat(new_filename, extension);
-    // const char* quarantine_dir = "/var/lib/av/quarantine/";
-    // char* new_filepath = malloc(strlen(quarantine_dir) + strlen(full_filename) + 1);
-    // strcpy(new_filepath, quarantine_dir);
-    // strcat(new_filepath, full_filename);
-    // int relocate = rename(filename, new_filepath);
-    // free(new_filename);
     
 }
 
