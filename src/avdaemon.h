@@ -6,6 +6,9 @@
 #include <sqlite3.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <pwd.h>
+#include <grp.h>
+#include <sys/types.h>
 #define AES_KEY_SIZE 32
 
 

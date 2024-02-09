@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <string.h>
 #include "avdaemon.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 
 char* get_substring(const char* string){
     char* substring = (char*)malloc(7); 
@@ -26,7 +24,7 @@ int main(int argc, char const *argv[])
         fprintf(stderr,"Failed to save a key.");
         return -1;
     }
-    isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", "BE4697716BE4F626FCDBEA03A8D1F93C");
+    isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", key); // simple test vec
     
     return 0;
 }
@@ -125,6 +123,24 @@ void drop_privileges(const char* filename){
     }
 }
 
+void change_owner(const char* filename){
+    const char* newowner = "dummyuser";
+    const char* newgroup = "dummygroup";
+    struct passwd *pw = getpwnam(newowner);
+    if (pw == NULL){
+        fprintf(stderr, "Failed to find user: %s",newowner);
+    }
+    uid_t uid = pw->pw_uid;
+    struct group *gr = getgrnam(newgroup);
+    if (gr == NULL){
+        fprintf(stderr, "Failed to find group: %s",newgroup);
+    }
+    gid_t gid = gr->gr_gid;
+    if (chown(filename, uid, gid) != 0){
+        fprintf(stderr, "Failed to change owner");
+    }
+}
+
 void relocate(const char* filename, const char* hash){
     const char* new_filename = get_substring(hash);
     if (new_filename == NULL){
@@ -152,6 +168,7 @@ void isolate(const char* filename, const char* hash, const unsigned char* key){
     encrypt_file(filename, key);
     const char* output_filename = rename_enc(filename);
     drop_privileges(output_filename);
+    change_owner(output_filename);
     relocate(output_filename,hash);
     
 }
@@ -159,7 +176,6 @@ void isolate(const char* filename, const char* hash, const unsigned char* key){
 int scan(const char* filename, sqlite3 **db, const unsigned char* key){
     const char* hashstring = compute_md5(filename);
     int found = find_signature_in_db(hashstring, &db);
-    
     if (found == 0){
         isolate(filename, hashstring, key);
     }
