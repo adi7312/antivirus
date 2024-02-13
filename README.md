@@ -16,7 +16,7 @@
 
 ## **Architecture**
 
-| ![](av.png) |
+| ![](docs/av.png) |
 |:--:| 
 | *Picture 1. AV Architecture* |
 
@@ -32,7 +32,7 @@
 
 All signatures are stored in SQLite database in `maams.db` file.
 
-|![](table.png)|
+|![](docs/table.png)|
 |:--:| 
 | *Picture 2. Table with signatures* |
 

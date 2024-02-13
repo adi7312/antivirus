@@ -11,9 +11,27 @@ sudo apt install libssl-dev
 openssl_output=$(openssl enc -aes-128-cbc -k secret -P -pbkdf2)
 key=$(echo "$openssl_output" | grep 'key=' | cut -d'=' -f2)
 
-sudo mkdir /home/av/security/
+# Create AV encryption key
+if [ ! -d "/home/av/security/" ]; then
+    sudo mkdir /home/av/security/
+fi
 sudo sh -c 'openssl_output=$(openssl enc -aes-128-cbc -k secret -P -pbkdf2);key=$(echo "$openssl_output" | grep 'key=' | cut -d'=' -f2);echo "$key" > /home/av/security/enc.key'
 sudo chmod 440 /home/av/security/enc.key
 sudo chown av:avgroup /home/av/security/enc.key
+
+# Create quarantine catalog
+
+if [ ! -d "/var/lib/av/quarantine"]; then
+    sudo mkdir /var/lib/av/quarantine
+fi
+
+sudo chown av:avgroup /var/lib/av/
+
+# Compile binary
+
+make
+sudo chown av:avgroup avdaemon
+
+
 
 
