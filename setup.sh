@@ -38,6 +38,11 @@ fi
 
 echo "\e[0;34m [*] Downloading libssl-dev...\e[m"
 sudo apt install libssl-dev 2>/dev/null 1>/dev/null
+if [ $? -eq 0 ]; then
+    echo "\e[0;32m [+] libssl-dev installed.\e[m"
+else
+    echo "\e[0;31m [-] Failed to install libssl-dev.\e[m"
+fi
 
 
 # Create AV encryption key
