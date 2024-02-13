@@ -15,7 +15,3 @@ $(TARGET): $(OBJECTS)
 .c.o:
 	$(CC)  -c $< -o $@
 	
-
-
-	
-
