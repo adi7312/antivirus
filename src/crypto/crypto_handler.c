@@ -71,6 +71,7 @@ void encrypt_file(const char* input_filename ,const unsigned char* ukey){
     }
     fclose(ifp);
     fclose(ofp);
+    free(output_filename);
 }
 
 char* rename_enc(const char* filename){

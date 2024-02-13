@@ -21,6 +21,7 @@ int main(int argc, char const *argv[])
         return -1;
     }
     isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", key); // simple test vec
+    free(key);
     
     return 0;
 }
@@ -79,7 +80,7 @@ void isolate(const char* filename, const char* hash, const unsigned char* key){
     drop_privileges(output_filename);
     change_owner(output_filename);
     relocate(output_filename,hash);
-    
+    free(output_filename);
 }
 
 int scan(const char* filename, sqlite3 **db, const unsigned char* key){
