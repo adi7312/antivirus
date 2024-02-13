@@ -52,10 +52,10 @@ void encrypt_file(const char* input_filename ,const unsigned char* ukey){
     const char* output_filename = rename_enc(input_filename);
     ifp = fopen(input_filename, "rb");
     ofp = fopen(output_filename, "wb");
-    // if (ifp == NULL || ofp == NULL){
-    //     fprintf(stderr, "Failed to open descriptor to input/output file.");
-    //     return;
-    // }
+    if (ifp == NULL || ofp == NULL){
+        fprintf(stderr, "Failed to open descriptor to input/output file.");
+        return;
+    }
     unsigned char init_vec[AES_BLOCK_SIZE];
     unsigned char read_buff[1024];
     unsigned char cipher_buf[sizeof(read_buff) + AES_BLOCK_SIZE];

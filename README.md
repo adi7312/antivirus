@@ -50,10 +50,10 @@ Type indicates if the provided signature is the signature of file or e.g. .text 
 Whenever AV detected that scanned file is malicious, it takes the following steps:
 1. AV logs the event includig details about file, detection time, reason of quarantine..
 2. File is encrypted.
-3. All permissions for that file are dropped to `000`. 
+3. All permissions of that file are dropped to `000`. 
 4. Owner of a file is changed to dummy user with no privileges.
 5. File is moved to `/var/lib/av/quarantine/`
-6. User is notified with possibly danagerous malware.
+6. User is notified with possible malware.
 
 
 
