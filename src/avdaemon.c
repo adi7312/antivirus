@@ -51,7 +51,7 @@ void change_owner(const char* filename){
 }
 
 void relocate(const char* filename, const char* hash){
-    const char* new_filename = get_substring(hash);
+    char* new_filename = get_substring(hash);
     if (new_filename == NULL){
         fprintf(stderr, "Failed to create new filename\n");
         return;
@@ -84,7 +84,7 @@ void isolate(const char* filename, const char* hash, const unsigned char* key){
 
 int scan(const char* filename, sqlite3 **db, const unsigned char* key){
     const char* hashstring = compute_md5(filename);
-    int found = find_signature_in_db(hashstring, &db);
+    int found = find_signature_in_db(hashstring, db);
     if (found == 0){
         isolate(filename, hashstring, key);
     }
