@@ -70,7 +70,7 @@ void encrypt_file(const char* input_filename ,const unsigned char* ukey){
         AES_cbc_encrypt(read_buff, cipher_buf, num_read, &aes_key, init_vec, AES_ENCRYPT);
         fwrite(cipher_buf,1,num_read, ofp);
     }
-    log(AV_LOG,SUCCESS,"File: %s was successfully encrypted.\n", output_filename);
+    log(AV_LOG,INFO,"File: %s was successfully encrypted.\n", output_filename);
     fclose(ifp);
     fclose(ofp);
     free(output_filename);

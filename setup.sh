@@ -104,6 +104,30 @@ else
     echo "\e[0;31m [-] Failed to set ownership for logs directory.\e[m"
 fi
 
+# Create resources catalog
+
+if [ ! -d "/var/lib/av/resources" ]; then
+    sudo mkdir /var/lib/av/resources
+    echo "\e[0;32m [+] Created resources directory.\e[m"
+    
+else 
+    echo "\e[0;31m [-] Failed to create resources directory. Directory already exists\e[m"
+fi
+
+sudo cp ./src/av.db /var/lib/av/resources
+if [ $? -eq 0 ]; then
+    echo "\e[0;32m [+] Copied /src/av.db to /var/lib/av/resources \e[m"
+else
+    echo "\e[0;31m [-] Failed to copy av.db\e[m"
+fi
+
+sudo chown av:avgroup /var/lib/av/resources
+if [ $? -eq 0 ]; then
+    echo "\e[0;32m [+] Set ownership for resources directory.\e[m"
+else
+    echo "\e[0;31m [-] Failed to set ownership for resources directory.\e[m"
+fi
+
 
 # Compile binary
 echo "\e[0;34m [*] Compiling binary...\e[m"

@@ -2,7 +2,7 @@
 
 int connect_db(sqlite3 **db)
 {
-    int rc = sqlite3_open("av.db", db);
+    int rc = sqlite3_open(AV_RESOURCES, db);
     if (rc)
     {
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(*db));

@@ -12,6 +12,8 @@
 
 int main(int argc, char const *argv[])
 {   
+    sqlite3 *db;
+    connect_db(&db);
     const unsigned char* key = (unsigned char*)malloc(AES_KEY_SIZE * sizeof(unsigned char));
     if (key == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -21,7 +23,8 @@ int main(int argc, char const *argv[])
         fprintf(stderr,"Failed to save a key.");
         return -1;
     }
-    isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", key); // simple test vec
+    //isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", key); // simple test vec
+    scan("test",&db,key);
     free(key);
     
     return 0;
@@ -73,7 +76,7 @@ void relocate(const char* filename, const char* hash){
     if (rename(filename, new_filepath)!=0){
         log(AV_LOG,WARN,"Failed to relocate file.\n");
     }
-    log(AV_LOG, SUCCESS, "File: %s has been relocated to: %s\n",filename, new_filepath);
+    log(AV_LOG, INFO, "File: %s has been relocated to: %s\n",filename, new_filepath);
     free(new_filename);
     free(new_filepath);
 }
@@ -94,8 +97,9 @@ int scan(const char* filename, sqlite3 **db, const unsigned char* key){
     const char* hashstring = compute_md5(filename);
     int found = find_signature_in_db(hashstring, db);
     if (found == 0){
-        isolate(filename, hashstring, key);
         log(AV_LOG,CRITICAL,"Detected possible malware: %s \n",filename);
+        log(AV_LOG,INFO,"Reason: signature of file matches signature in database.\n");
+        isolate(filename, hashstring, key);
     }
 }
 
