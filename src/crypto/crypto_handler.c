@@ -1,5 +1,6 @@
 #include "crypto_handler.h"
 
+
 int get_key(const char* filename, const unsigned char* key){
     FILE *fp = fopen(filename, "rb");
     if (fp == NULL){
@@ -69,9 +70,11 @@ void encrypt_file(const char* input_filename ,const unsigned char* ukey){
         AES_cbc_encrypt(read_buff, cipher_buf, num_read, &aes_key, init_vec, AES_ENCRYPT);
         fwrite(cipher_buf,1,num_read, ofp);
     }
+    log(AV_LOG,SUCCESS,"File: %s was successfully encrypted.\n", output_filename);
     fclose(ifp);
     fclose(ofp);
     free(output_filename);
+    
 }
 
 char* rename_enc(const char* filename){

@@ -4,6 +4,7 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <stdio.h>
+#include "../log/log.h"
 #define AES_KEY_SIZE 32
 
 

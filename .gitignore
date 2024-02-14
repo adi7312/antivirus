@@ -3,3 +3,5 @@ avdaemon
 /.vscode
 /src/test
 test
+test.sh
+av.log

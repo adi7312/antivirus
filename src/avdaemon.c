@@ -6,6 +6,7 @@
 #include "util/db.h"
 #include "crypto/crypto_handler.h"
 #include "avdaemon.h"
+#include "log/log.h"
 
 
 
@@ -29,8 +30,9 @@ int main(int argc, char const *argv[])
 void drop_privileges(const char* filename){
     int drop_priv = chmod(filename, 0000);
     if (drop_priv != 0){
-         fprintf(stderr, "Cannot drop privileges.\n");
+        log(AV_LOG,WARN,"Cannot drop privileges for: %s.",filename);
     }
+    log(AV_LOG,INFO, "Dropped privileges for: %s.\n",filename);
 }
 
 void change_owner(const char* filename){
@@ -38,23 +40,24 @@ void change_owner(const char* filename){
     const char* newgroup = "dummygroup";
     struct passwd *pw = getpwnam(newowner);
     if (pw == NULL){
-        fprintf(stderr, "Failed to find user: %s\n",newowner);
+        log(AV_LOG,WARN,"Failed to find user: %s.\n",newowner);
     }
     uid_t uid = pw->pw_uid;
     struct group *gr = getgrnam(newgroup);
     if (gr == NULL){
-        fprintf(stderr, "Failed to find group: %s\n",newgroup);
+        log(AV_LOG,WARN,"Failed to find group: %s.\n",newowner);
     }
     gid_t gid = gr->gr_gid;
     if (chown(filename, uid, gid) != 0){
-        fprintf(stderr, "Failed to change owner\n");
+        log(AV_LOG,WARN,"Failed to change owner.\n");
     }
+    log(AV_LOG,INFO, "Owner of: %s has been changed.\n",filename);
 }
 
 void relocate(const char* filename, const char* hash){
     char* new_filename = get_substring(hash);
     if (new_filename == NULL){
-        fprintf(stderr, "Failed to create new filename\n");
+        log(AV_LOG,WARN,"Failed to create new filename.\n");
         return;
     }
     const char* extension = ".0";
@@ -68,26 +71,31 @@ void relocate(const char* filename, const char* hash){
     }
     snprintf(new_filepath, new_filepath_size, "%s%s%s",quarantine_dir,new_filename,extension);
     if (rename(filename, new_filepath)!=0){
-        fprintf(stderr, "File Relocation error\n");
+        log(AV_LOG,WARN,"Failed to relocate file.\n");
     }
+    log(AV_LOG, SUCCESS, "File: %s has been relocated to: %s\n",filename, new_filepath);
     free(new_filename);
     free(new_filepath);
 }
 
 void isolate(const char* filename, const char* hash, const unsigned char* key){
+    log(AV_LOG,INFO,"Executing quarantine mechanism.\n");
     encrypt_file(filename, key);
     const char* output_filename = rename_enc(filename);
     drop_privileges(output_filename);
     change_owner(output_filename);
     relocate(output_filename,hash);
+    log(AV_LOG,SUCCESS,"Finished quarantine mechanism.\n");
     free(output_filename);
 }
 
 int scan(const char* filename, sqlite3 **db, const unsigned char* key){
+    log(AV_LOG,INFO,"Scanning: %s.\n",filename);
     const char* hashstring = compute_md5(filename);
     int found = find_signature_in_db(hashstring, db);
     if (found == 0){
         isolate(filename, hashstring, key);
+        log(AV_LOG,CRITICAL,"Detected possible malware: %s \n",filename);
     }
 }
 
