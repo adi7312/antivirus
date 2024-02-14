@@ -120,6 +120,14 @@ else
     echo "\e[0;31m [-] Failed to set ownership for binary.\e[m"
 fi
 
+# Set capabilities
+
+sudo setcap cap_dac_read_search=+ep ./avdaemon
+if [ $? -eq 0 ]; then
+    echo "\e[0;32m [+] Set capabilities for binary.\e[m"
+else
+    echo "\e[0;31m [-] Failed to set capabilities for binary.\e[m"
+fi
 
 
 
