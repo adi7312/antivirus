@@ -88,6 +88,23 @@ else
     echo "\e[0;31m [-] Failed to set ownership for quarantine directory.\e[m"
 fi
 
+# Create log catalog
+
+if [ ! -d "/var/lib/av/logs" ]; then
+    sudo mkdir /var/lib/av/logs
+    echo "\e[0;32m [+] Created log directory.\e[m"
+else 
+    echo "\e[0;31m [-] Failed to create logs directory. Directory already exists\e[m"
+fi
+
+sudo chown av:avgroup /var/lib/av/logs
+if [ $? -eq 0 ]; then
+    echo "\e[0;32m [+] Set ownership for logs directory.\e[m"
+else
+    echo "\e[0;31m [-] Failed to set ownership for logs directory.\e[m"
+fi
+
+
 # Compile binary
 echo "\e[0;34m [*] Compiling binary...\e[m"
 make 2>/dev/null 1>/dev/null
