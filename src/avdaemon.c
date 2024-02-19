@@ -14,7 +14,7 @@ int main(int argc, char const *argv[])
 {   
     sqlite3 *db;
     connect_db(&db);
-    const unsigned char* key = (unsigned char*)malloc(AES_KEY_SIZE * sizeof(unsigned char));
+    unsigned char* key = (unsigned char*)malloc(AES_KEY_SIZE * sizeof(unsigned char));
     if (key == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         return -1;
@@ -26,6 +26,7 @@ int main(int argc, char const *argv[])
     //isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", key); // simple test vec
     scan("test",&db,key);
     free(key);
+    sqlite3_close(db);
     
     return 0;
 }
@@ -101,6 +102,7 @@ int scan(const char* filename, sqlite3 **db, const unsigned char* key){
         log(AV_LOG,INFO,"Reason: signature of file matches signature in database.\n");
         isolate(filename, hashstring, key);
     }
+    free(hashstring);
 }
 
 

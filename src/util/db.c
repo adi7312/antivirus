@@ -1,15 +1,17 @@
 #include "db.h"
+#include "../log/log.h"
 
 int connect_db(sqlite3 **db)
 {
     int rc = sqlite3_open(AV_RESOURCES, db);
     if (rc)
     {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(*db));
+        log(AV_LOG, SUCCESS, "Failed to open database");
         return 1;
-    } else {
-        fprintf(stderr, "Opened database successfully\n");
-    }
+    } 
+    log(AV_LOG, SUCCESS, "Opened database successfully.");
+    return 0;
+    
 }
 
 int find_signature_in_db(const char* hashstring, sqlite3 **db){
