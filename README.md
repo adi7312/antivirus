@@ -30,7 +30,7 @@
 
 ## **Signature storage**
 
-All signatures are stored in SQLite database in `maams.db` file.
+All signatures are stored in SQLite database in `av.db` file.
 
 |![](docs/table.png)|
 |:--:| 
@@ -51,9 +51,8 @@ Whenever AV detected that scanned file is malicious, it takes the following step
 1. AV logs the event includig details about file, detection time, reason of quarantine..
 2. File is encrypted.
 3. All permissions of that file are dropped to `000`. 
-4. Owner of a file is changed to dummy user with no privileges.
-5. File is moved to `/var/lib/av/quarantine/`
-6. User is notified with possible malware.
+4. File is moved to `/var/lib/av/quarantine/`
+5. User is notified with possible malware.
 
 
 

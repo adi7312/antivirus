@@ -4,11 +4,11 @@
 int get_key(const char* filename, const unsigned char* key){
     FILE *fp = fopen(filename, "rb");
     if (fp == NULL){
-        fprintf(stderr, "Failed to load key file");
+        log(AV_LOG,ERROR, "Failed to open descriptor to file %s.\n",filename);
         return -1;
     }
     if (fread(key, 1, AES_KEY_SIZE, fp) < AES_KEY_SIZE){
-        fprintf(stderr, "Failed to load AES key file.");
+        log(AV_LOG,ERROR, "Failed to load key file.\n");
         fclose(fp);
         return -1;
     }
@@ -26,7 +26,8 @@ char* compute_md5(const char *filename)
     char* hash_string;
 
     if (file == NULL){
-        fprintf(stderr, "Cannot open file.");
+        log(AV_LOG,ERROR, "Failed to open descriptor to file %s.\n",filename);
+        return;
     }
 
     MD5_Init(&context);
@@ -48,14 +49,14 @@ char* compute_md5(const char *filename)
     return hash_string;
 }
 
-void encrypt_file(const char* input_filename ,const unsigned char* ukey){
+int encrypt_file(const char* input_filename ,const unsigned char* ukey){
     FILE *ifp, *ofp;
     const char* output_filename = rename_enc(input_filename);
     ifp = fopen(input_filename, "rb");
     ofp = fopen(output_filename, "wb");
     if (ifp == NULL || ofp == NULL){
-        fprintf(stderr, "Failed to open descriptor to input/output file.");
-        return;
+        log(AV_LOG,ERROR, "Failed to open descriptor to file %s.\n",input_filename);
+        return 1;
     }
     unsigned char init_vec[AES_BLOCK_SIZE];
     unsigned char read_buff[1024];
@@ -74,6 +75,7 @@ void encrypt_file(const char* input_filename ,const unsigned char* ukey){
     fclose(ifp);
     fclose(ofp);
     free(output_filename);
+    return 0;
     
 }
 
@@ -83,7 +85,7 @@ char* rename_enc(const char* filename){
     
     const char* output_filename = (char*)malloc(new_filename_size);
     if (output_filename == NULL){
-            fprintf(stderr, "Memory Allocation failed for new_filepath");
+            log(AV_LOG,ERROR, "Memory allocation failed during renaming file: %s.\n",filename);
             free(output_filename);
             return;
     }

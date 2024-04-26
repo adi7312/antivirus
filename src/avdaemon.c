@@ -16,14 +16,13 @@ int main(int argc, char const *argv[])
     connect_db(&db);
     unsigned char* key = (unsigned char*)malloc(AES_KEY_SIZE * sizeof(unsigned char));
     if (key == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
+        log(AV_LOG,ERROR, "Memory allocation failed when allocating memory for AES key.\n");
         return -1;
     }
     if (get_key("/home/av/security/enc.key", key) != 0) {
-        fprintf(stderr,"Failed to save a key.");
+        log(AV_LOG,ERROR,"Failed to save a key.");
         return -1;
     }
-    //isolate("test", "d45a886a6cdd86f4ea8e10032c8f1e97", key); // simple test vec
     scan("test",&db,key);
     free(key);
     sqlite3_close(db);
@@ -31,65 +30,61 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void drop_privileges(const char* filename){
+int drop_privileges(const char* filename){
     int drop_priv = chmod(filename, 0000);
     if (drop_priv != 0){
         log(AV_LOG,WARN,"Cannot drop privileges for: %s.",filename);
+        return 1;
     }
     log(AV_LOG,INFO, "Dropped privileges for: %s.\n",filename);
+    return 0;
 }
 
-void change_owner(const char* filename){
-    const char* newowner = "dummyuser";
-    const char* newgroup = "dummygroup";
-    struct passwd *pw = getpwnam(newowner);
-    if (pw == NULL){
-        log(AV_LOG,WARN,"Failed to find user: %s.\n",newowner);
-    }
-    uid_t uid = pw->pw_uid;
-    struct group *gr = getgrnam(newgroup);
-    if (gr == NULL){
-        log(AV_LOG,WARN,"Failed to find group: %s.\n",newowner);
-    }
-    gid_t gid = gr->gr_gid;
-    if (chown(filename, uid, gid) != 0){
-        log(AV_LOG,WARN,"Failed to change owner.\n");
-    }
-    log(AV_LOG,INFO, "Owner of: %s has been changed.\n",filename);
-}
 
-void relocate(const char* filename, const char* hash){
+int relocate(const char* filename, const char* hash){
     char* new_filename = get_substring(hash);
     if (new_filename == NULL){
-        log(AV_LOG,WARN,"Failed to create new filename.\n");
-        return;
+        log(AV_LOG,ERROR,"Failed to create new filename.\n");
+        return 1;
     }
     const char* extension = ".0";
     const char* quarantine_dir = "/var/lib/av/quarantine/";
     size_t new_filepath_size = strlen(quarantine_dir) + strlen(new_filename) + strlen(extension) + 1;
     char* new_filepath = (char*)malloc(new_filepath_size);
     if (new_filepath == NULL){
-        fprintf(stderr, "Memory Allocation failed for new_filepath\n");
+        log(AV_LOG,ERROR,"Failed to allocate new_filepath.\n");
         free(new_filepath);
-        return;
+        return 2;
     }
     snprintf(new_filepath, new_filepath_size, "%s%s%s",quarantine_dir,new_filename,extension);
     if (rename(filename, new_filepath)!=0){
-        log(AV_LOG,WARN,"Failed to relocate file.\n");
+        log(AV_LOG,ERROR,"Failed to relocate file.\n");
+        return 3;
     }
     log(AV_LOG, INFO, "File: %s has been relocated to: %s\n",filename, new_filepath);
     free(new_filename);
     free(new_filepath);
+    return 0;
 }
 
 void isolate(const char* filename, const char* hash, const unsigned char* key){
+    int is_renamed = 0;
     log(AV_LOG,INFO,"Executing quarantine mechanism.\n");
-    encrypt_file(filename, key);
+    if(encrypt_file(filename, key)!=0){
+        log(AV_LOG,WARN,"File encryption procedure failed for file %s.\n",filename);
+    }
     const char* output_filename = rename_enc(filename);
-    drop_privileges(output_filename);
-    change_owner(output_filename);
-    relocate(output_filename,hash);
-    log(AV_LOG,SUCCESS,"Finished quarantine mechanism.\n");
+    if (output_filename == NULL){
+        log(AV_LOG,ERROR,"Renaming file failed.\n");
+        return;
+    }
+    if(drop_privileges(output_filename)!= 0){
+        log(AV_LOG,WARN, "Failed to drop privileges for %s.\n",output_filename);
+    }
+    if(relocate(output_filename,hash) != 0){
+        log(AV_LOG,WARN,"Failed to relocate file: %s\n.",output_filename);
+    }
+    log(AV_LOG,SUCCESS,"Finished quarantine mechanism for %s.\n",filename);
     free(output_filename);
 }
 
@@ -104,6 +99,7 @@ int scan(const char* filename, sqlite3 **db, const unsigned char* key){
     }
     free(hashstring);
 }
+
 
 
 

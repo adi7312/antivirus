@@ -10,6 +10,7 @@
 #define WARN 1
 #define CRITICAL 2
 #define SUCCESS 3
+#define ERROR 4
 #define AV_LOG "/var/lib/av/logs/av.log"
 
 void log(const char* filename, int type, const char* format, ...);

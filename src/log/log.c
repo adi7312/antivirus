@@ -41,7 +41,11 @@ void log(const char* filename, int type, const char* format,...){
             fprintf(stderr, "Failed to write log to file.");
         }
         break;
-    break;
+    case 4:
+        if (fprintf(ifp, "[ERROR] ") < 0){
+            fprintf(stderr, "Failed to write log to file.");
+        }
+        break;
     default:
         fprintf(stderr, "Unknown type. Aborting...\n");
         fclose(ifp); 
